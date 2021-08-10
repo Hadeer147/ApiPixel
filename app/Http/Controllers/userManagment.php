@@ -5,10 +5,38 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class userManagment extends Controller
 {
+    
+    public function reset(Request $request) {
+        $userOldPassword = $request->user()->password;
+        if(password_verify($request->oldpassword,$userOldPassword)) {
+            $validation = Validator::make($request->all(),[
+                'password' => 'required|confirmed',
+            ]);
+
+            if ($validation->fails())  {
+                return response()->json([
+                    'validation' => $validation->messages()
+                ]);
+            } else {
+               $request->user()->password = Hash::make($request->password);
+               $request->user()->save();
+               return response()->json([
+                   'message' => 'password has been changed'
+               ]);
+            }
+
+        } else {
+            return response()->json([
+                'message' => 'failed to change password'
+            ]);
+        }
+    }
+
     public function update(User $user,Request $request) {
         $user = $request->user();
         $validator = Validator::make($request->all(),[
